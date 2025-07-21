@@ -19,7 +19,7 @@ public class UnitOfWork : IUnitOfWork
     
     public IGenericRepository<User> UsersRepo => new GenericRepository<User>(_dbContext);
 
-    public async Task Save()
+    public async Task SaveChangesAsync()
     {
         await _dbContext.SaveChangesAsync();
     }

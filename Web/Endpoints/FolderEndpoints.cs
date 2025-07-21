@@ -1,7 +1,14 @@
 using Application.Dtos.Folders;
+using Application.Folders.Commands.CreateFolder;
+using Application.Folders.Commands.Delete;
+using Application.Folders.Commands.Update;
+using Application.Folders.Queries.GetAll;
+using Application.Folders.Queries.GetById;
+using Application.Folders.Queries.GetFilteredSorted;
 using Application.Services.Interfaces;
+using MediatR;
 
-namespace FinderClone.Endpoints;
+namespace Web.Endpoints;
 
 public static class FolderEndpoints
 {
@@ -9,62 +16,47 @@ public static class FolderEndpoints
     {
         var folderGroup = app.MapGroup("/folders").WithTags("Folders");
         
-        folderGroup.MapGet("/", async (IFolderService folderService) =>
+        folderGroup.MapGet("/", async (ISender sender, GetAllQuery query) =>
         {
-            var folders = await folderService.GetAllFoldersAsync();
+            var folders = await sender.Send(query);
            
             return Results.Ok(folders);
         }).RequireAuthorization("Read");
         
-        folderGroup.MapGet("/filter", async ([AsParameters] DynamicFilterSortDto filter, IFolderService folderService) =>
+        folderGroup.MapGet("/filter", async (ISender sender, [AsParameters] GetFilteredSortedQuery query) =>
         {
-            var folders = await folderService.GetFilteredFoldersAsync(filter);
+            var folders = await sender.Send(query);
             
             return Results.Ok(folders);
         }).RequireAuthorization("Read");
-        
-        /*folderGroup.MapGet("/{name}", async (string name, IFolderService folderService) =>
-        {
-            var folders = await folderService.GetFoldersByNameAsync(name);
-            
-            return folders.Count == 0 ? Results.NotFound() : Results.Ok(folders);
-        }).RequireAuthorization("Read");*/
 
-        folderGroup.MapGet("/{id:guid}", async (Guid id, IFolderService folderService) =>
+        folderGroup.MapGet("/{id:guid}", async (ISender sender, GetByIdQuery query) =>
         {
-            var folder = await folderService.GetFolderByIdAsync(id);
+            var folder = await sender.Send(query);
             
             if (folder == null) return Results.NotFound();
             return Results.Ok(folder);
         }).RequireAuthorization("Read");
         
-       /*
-        folderGroup.MapGet("/{name}", async ([AsParameters] FolderFilterDto filter, IFolderService folderService) =>
+        folderGroup.MapPost("/", async (ISender sender, CreateQuery query) =>
         {
-            var folders = await folderService.GetFoldersByNameFilteredAsync(filter);
-            return folders.Items.Count == 0 ? Results.NotFound() : Results.Ok(folders);
-        }).RequireAuthorization("Read");
-    */
-
-        folderGroup.MapPost("/", async (CreateFolderDto folderDto, IFolderService folderService) =>
-        {
-            var newFolder = await folderService.AddFolderAsync(folderDto);
+            var newFolder = await sender.Send(query);
 
             return Results.Created($"/folders/{newFolder.Id}", newFolder.Id);
         }).RequireAuthorization("ReadWrite");
 
-        folderGroup.MapPut("/{id:guid}", async (Guid id, UpdateFolderDto folderDto, IFolderService folderService) =>
+        folderGroup.MapPut("/{id:guid}", async (ISender sender, UpdateQuery query) =>
         {
             
-            var updated = await folderService.UpdateFolderAsync(folderDto, id);
+            var updated = await sender.Send(query);
             
             if (updated) return Results.Ok();
             return Results.BadRequest();
         }).RequireAuthorization("ReadWrite");
 
-        folderGroup.MapDelete("/{id:guid}", async (Guid id, IFolderService folderService) =>
+        folderGroup.MapDelete("/{id:guid}", async (ISender sender, DeleteQuery query) =>
         {
-            var deleted = await folderService.DeleteFolderAsync(id);
+            var deleted = await sender.Send(query);
             
             if(deleted) return Results.Ok();
             return Results.NotFound();

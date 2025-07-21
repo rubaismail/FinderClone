@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FinderClone.Migrations
+namespace Web.Migrations
 {
     /// <inheritdoc />
     public partial class ParentFolderId_key : Migration

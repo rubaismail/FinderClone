@@ -10,9 +10,9 @@ namespace Application.Services;
 
 public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings> settings): IStoredFileService
 {
-    public async Task<List<GetFileDto>> GetAllFilesAsync()
+    public async Task<List<GetFileDto>> GetAllFilesAsync(CancellationToken cancellationToken)
     {
-        var files = await unitOfWork.FilesRepo.GetAll();
+        var files = await unitOfWork.FilesRepo.GetAll(cancellationToken);
         var filesDto = files.Select(f => new GetFileDto
         {
             Name = f.Name,
@@ -23,9 +23,9 @@ public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings
         return filesDto;
     }
     
-    public async Task<List<GetFileDto>> GetFilteredFilesAsync(DynamicFilterSortDto filter)
+    public async Task<List<GetFileDto>> GetFilteredFilesAsync(DynamicFilterSortDto filter, CancellationToken cancellationToken)
     {
-        var files = await unitOfWork.FilesRepo.GetFilteredSorted(filter);
+        var files = await unitOfWork.FilesRepo.GetFilteredSorted(filter, cancellationToken);
 
         var filesDto = files.Select(f => new GetFileDto
         {
@@ -70,9 +70,9 @@ public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings
         return new PaginatedResult<GetFileDto>(filesDto, files.TotalCount, filter.Page, filter.PageSize);
     }
     */
-    public async Task<GetFileDto?> GetFileByIdAsync(Guid id)
+    public async Task<GetFileDto?> GetFileByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var file = await unitOfWork.FilesRepo.GetById(id);
+        var file = await unitOfWork.FilesRepo.GetById(id, cancellationToken);
         if (file == null) return null;
         
         var fileDto = new GetFileDto
@@ -87,7 +87,7 @@ public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings
         return fileDto;
     }
 
-    public async Task<StoredFile> AddFileAsync(CreateFileDto createFileDto)
+    public async Task<StoredFile> AddFileAsync(CreateFileDto createFileDto, CancellationToken cancellationToken)
     {
         var newFile = new StoredFile
         {
@@ -96,7 +96,7 @@ public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings
             RelativePath = createFileDto.RelativePath,
             CreationDate = DateTime.UtcNow
         };
-        await unitOfWork.FilesRepo.Add(newFile);
+        await unitOfWork.FilesRepo.Add(newFile, cancellationToken);
         
         var basePath = settings.Value.BasePath;
         var safeFileName = PathHelper.MakeSafeName(newFile.Name);
@@ -105,15 +105,15 @@ public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings
         using (File.Create(fullPath)) { }
         
         newFile.SizeBytes = new FileInfo(fullPath).Length;
-        await unitOfWork.FilesRepo.Update(newFile.Id, newFile);
-        await unitOfWork.Save(); 
+        await unitOfWork.FilesRepo.Update(newFile.Id, newFile, cancellationToken);
+        await unitOfWork.SaveChangesAsync(); 
         
         return newFile;
     }
 
-    public async Task<bool> UpdateFileAsync(UpdateFileDto fileDto, Guid id)
+    public async Task<bool> UpdateFileAsync(UpdateFileDto fileDto, Guid id, CancellationToken cancellationToken)
     {
-        var originalFile = await unitOfWork.FilesRepo.GetById(id);
+        var originalFile = await unitOfWork.FilesRepo.GetById(id, cancellationToken);
         var updatedFile = new StoredFile
         {
             Name = fileDto.Name == null ? originalFile.Name : fileDto.Name,
@@ -127,24 +127,24 @@ public class StoredFileService (IUnitOfWork unitOfWork, IOptions<StorageSettings
         var fullDestPath = Path.Combine(basePath, updatedFile.RelativePath ?? "", updatedFile.Name);
         File.Move(fullSourcePath, fullDestPath);
         
-        var updated = await unitOfWork.FilesRepo.Update(id, updatedFile);
-        await unitOfWork.Save(); 
+        var updated = await unitOfWork.FilesRepo.Update(id, updatedFile, cancellationToken);
+        await unitOfWork.SaveChangesAsync(); 
         
         return updated;
     }
 
-    public async Task<bool> DeleteFileAsync(Guid id)
+    public async Task<bool> DeleteFileAsync(Guid id, CancellationToken cancellationToken)
     {
-        var file = await unitOfWork.FilesRepo.GetById(id);
+        var file = await unitOfWork.FilesRepo.GetById(id, cancellationToken);
         bool deleted = false;
         if (file != null)
         {
             var basePath = settings.Value.BasePath;
             var fullPath = Path.Combine(basePath, file.RelativePath ?? "", file.Name);
             Directory.Delete(fullPath, true);
-            deleted = await unitOfWork.FilesRepo.Delete(id); 
+            deleted = await unitOfWork.FilesRepo.Delete(id, cancellationToken); 
         }
-        await unitOfWork.Save(); 
+        await unitOfWork.SaveChangesAsync(); 
         return deleted;
     }
 }

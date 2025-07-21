@@ -9,14 +9,14 @@ namespace Application.Services;
 
 public class UserService (IUnitOfWork unitOfWork, IPasswordHasher<User> hasher, IJwtTokenGenerator jwt) : IUserService
 {
-    public async Task<bool> RegisterUserAsync(RegisterUserDto registerDto)
+    public async Task<bool> RegisterUserAsync(RegisterUserDto registerDto, CancellationToken cancellationToken)
     {
         var exists = await unitOfWork.UsersRepo.GetFilteredSorted(new DynamicFilterSortDto
         {
             FilterBy = "Username",
             Operation = FilterOperation.Equal,
             Value = registerDto.Username
-        });
+        }, cancellationToken);
         if (exists.Count != 0)
             return false;
         
@@ -28,20 +28,20 @@ public class UserService (IUnitOfWork unitOfWork, IPasswordHasher<User> hasher, 
         };
 
         user.PasswordHash = hasher.HashPassword(user, user.PasswordHash);
-        await unitOfWork.UsersRepo.Add(user);
-        await unitOfWork.Save();
+        await unitOfWork.UsersRepo.Add(user, cancellationToken);
+        await unitOfWork.SaveChangesAsync();
 
         return true;
     }
 
-    public async Task<string?> AuthenticateUserAsync(LoginUserDto loginDto)
+    public async Task<string?> AuthenticateUserAsync(LoginUserDto loginDto, CancellationToken cancellationToken)
     {
         var exists = await unitOfWork.UsersRepo.GetFilteredSorted(new DynamicFilterSortDto
         {
             FilterBy = "Username",
             Operation = FilterOperation.Equal,
             Value = loginDto.Username
-        });
+        }, cancellationToken);
         var user = exists.SingleOrDefault();
         if (user == null)
             return null;

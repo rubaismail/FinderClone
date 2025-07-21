@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FinderClone.Migrations
+namespace Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20250713094453_AddedRoletoUserEntityAndCreationDateToFolders")]

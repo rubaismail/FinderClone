@@ -1,6 +1,6 @@
 using Microsoft.OpenApi.Models;
 
-namespace FinderClone;
+namespace Web;
 
 public static class DependencyInjection
 {

@@ -1,8 +1,15 @@
 using Application.Dtos.Files;
 using Application.Dtos.Folders;
+using Application.Files.Commands.Create;
+using Application.Files.Commands.Delete;
+using Application.Files.Commands.Update;
+using Application.Files.Queries.GetAll;
+using Application.Files.Queries.GetById;
+using Application.Files.Queries.GetFilteredSorted;
 using Application.Services.Interfaces;
+using MediatR;
 
-namespace FinderClone.Endpoints;
+namespace Web.Endpoints;
 
 public static class StoredFileEndpoints
 {
@@ -10,62 +17,46 @@ public static class StoredFileEndpoints
     {
         var fileGroup = app.MapGroup("/files").WithTags("Files").WithTags("Files");
 
-        fileGroup.MapGet("/", async (IStoredFileService storedFileService) =>
+        fileGroup.MapGet("/", async (ISender sender, GetAllQuery query) =>
         {
-            var files = await storedFileService.GetAllFilesAsync();
+            var files = await sender.Send(query);
 
             return Results.Ok(files);
         }).RequireAuthorization("Read");
         
-        fileGroup.MapGet("/filter", async ([AsParameters] DynamicFilterSortDto filter, IStoredFileService fileService) =>
+        fileGroup.MapGet("/filter", async (ISender sender, [AsParameters] GetFilteredSortedQuery query) =>
         {
-            var files = await fileService.GetFilteredFilesAsync(filter);
+            var files = await sender.Send(query);
             
             return Results.Ok(files);
         }).RequireAuthorization("Read");
         
-        /*fileGroup.MapGet("/{name}", async (String name, IStoredFileService storedFileService) =>
+        fileGroup.MapGet("/{id:guid}", async (ISender sender, GetByIdQuery query) =>
         {
-            var files = await storedFileService.GetFileByNameAsync(name);
-            if (files.Count == 0) return Results.NotFound();
-
-            return Results.Ok(files);
-        }).RequireAuthorization("Read");*/
-        
-        fileGroup.MapGet("/{id:guid}", async (Guid id, IStoredFileService storedFileService) =>
-        {
-            var file = await storedFileService.GetFileByIdAsync(id);
+            var file = await sender.Send(query);
             if (file == null) return Results.NotFound();
             
             return Results.Ok(file);
         }).RequireAuthorization("Read");
-        
-    /*
-        fileGroup.MapGet("/", async ([AsParameters] FileFilterDto filter, IStoredFileService storedFileService) =>
-        {
-            var files = await storedFileService.GetFilesFilteredAsync(filter);
-            return files.Items.Count == 0 ? Results.NotFound() : Results.Ok(files);
-        }).RequireAuthorization("Read");
-    */
 
-        fileGroup.MapPost("/", async (CreateFileDto createFileDto, IStoredFileService storedFileService) =>
+        fileGroup.MapPost("/", async (ISender sender, CreateQuery query) =>
         {
-            var newFile = await storedFileService.AddFileAsync(createFileDto);
+            var newFile = await sender.Send(query);
             
             return Results.Created($"/files/{newFile.Id}", newFile.Id);
         }).RequireAuthorization("ReadWrite");
 
-        fileGroup.MapPut("/{id:guid}", async (Guid id, UpdateFileDto fileDto, IStoredFileService storedFileService) =>
+        fileGroup.MapPut("/{id:guid}", async (ISender sender, UpdateQuery query) =>
         {
-            var updated = await storedFileService.UpdateFileAsync(fileDto, id);
+            var updated = await sender.Send(query);
             if (updated) return Results.Ok(updated);
             
             return Results.BadRequest();
         }).RequireAuthorization("ReadWrite");
 
-        fileGroup.MapDelete("/{id:guid}", async (Guid id, IStoredFileService storedFileService) =>
+        fileGroup.MapDelete("/{id:guid}", async (ISender sender, DeleteQuery query) =>
         {
-            var deleted = await storedFileService.DeleteFileAsync(id);
+            var deleted = await sender.Send(query);
             if (deleted) return Results.Ok(deleted);
             
             return Results.NotFound();

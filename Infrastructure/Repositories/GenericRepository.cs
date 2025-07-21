@@ -8,12 +8,12 @@ namespace Infrastructure.Repositories;
 
 public class GenericRepository<T> (AppDbContext dbContext) : IGenericRepository<T> where T : BaseEntity
 {
-    public async Task<List<T>> GetAll()
+    public async Task<List<T>> GetAll(CancellationToken cancellationToken)
     {
         return await dbContext.Set<T>().ToListAsync();
     }
 
-    public async Task<List<T>> GetFilteredSorted(DynamicFilterSortDto filter) // add the option to include
+    public async Task<List<T>> GetFilteredSorted(DynamicFilterSortDto filter, CancellationToken cancellationToken) // add the option to include
     {
         if (string.IsNullOrEmpty(filter.SortBy) && string.IsNullOrEmpty(filter.FilterBy))
             return await dbContext.Set<T>().ToListAsync();
@@ -38,29 +38,19 @@ public class GenericRepository<T> (AppDbContext dbContext) : IGenericRepository<
         return await query3.ToListAsync();
     }
     
-    public async Task<T?> GetById(Guid id)
+    public async Task<T?> GetById(Guid id, CancellationToken cancellationToken)
     {
-        return await dbContext.Set<T>()
-            .FirstOrDefaultAsync(t => t.Id == id);
+        return await dbContext.Set<T>().FindAsync([id], cancellationToken);
     }
-    
-    /*
-     public async Task<List<T>> GetByName(string name)
-    
-    {
-        return await dbContext.Set<T>()
-            .Where(t => EF.Functions.ILike(t.Name, $"%{name}%")).ToListAsync();
-    }
-    */
-    
-    public async Task<T> Add(T entity)
+
+    public async Task<T> Add(T entity, CancellationToken cancellationToken)
     {
         await dbContext.Set<T>().AddAsync(entity);
         
         return entity;
     }
     
-    public async Task<bool> Update(Guid id, T entity)
+    public async Task<bool> Update(Guid id, T entity, CancellationToken cancellationToken)
     {
         var existingT = await dbContext.Set<T>().FindAsync(id);
         if (existingT == null)
@@ -71,9 +61,9 @@ public class GenericRepository<T> (AppDbContext dbContext) : IGenericRepository<
         return true;
     }
 
-    public async Task<bool> Delete(Guid id)
+    public async Task<bool> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var entity = await GetById(id);
+        var entity = await GetById(id, cancellationToken);
         if (entity == null) return false;
         
         dbContext.Set<T>().Remove(entity);

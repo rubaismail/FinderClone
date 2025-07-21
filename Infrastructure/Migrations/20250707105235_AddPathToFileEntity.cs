@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace FinderClone.Migrations
+namespace Web.Migrations
 {
     /// <inheritdoc />
     public partial class AddPathToFileEntity : Migration

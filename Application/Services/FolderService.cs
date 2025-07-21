@@ -9,9 +9,9 @@ namespace Application.Services;
 
 public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> settings) : IFolderService
 {
-    public async Task<List<GetManyFoldersDto>> GetAllFoldersAsync()
+    public async Task<List<GetManyFoldersDto>> GetAllFoldersAsync(CancellationToken cancellationToken)
     {
-        var folders = await unitOfWork.FoldersRepo.GetAll();
+        var folders = await unitOfWork.FoldersRepo.GetAll(cancellationToken);
         var foldersDto = folders.Select(f => new GetManyFoldersDto
         {
             Name = f.Name,
@@ -21,9 +21,9 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
         return foldersDto;
     }
     
-    public async Task<List<GetManyFoldersDto>> GetFilteredFoldersAsync(DynamicFilterSortDto filter)
+    public async Task<List<GetManyFoldersDto>> GetFilteredFoldersAsync(DynamicFilterSortDto filter, CancellationToken cancellationToken)
     {
-        var folders = await unitOfWork.FoldersRepo.GetFilteredSorted(filter);
+        var folders = await unitOfWork.FoldersRepo.GetFilteredSorted(filter, cancellationToken);
 
         var foldersDto = folders.Select(f => new GetManyFoldersDto
         {
@@ -34,9 +34,9 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
         return foldersDto;
     }
 
-    public async Task<GetFolderDto?> GetFolderByIdAsync(Guid id)
+    public async Task<GetFolderDto?> GetFolderByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        var folder = await unitOfWork.FoldersRepo.GetById(id);
+        var folder = await unitOfWork.FoldersRepo.GetById(id, cancellationToken);
         if (folder == null) return null;
         var folderDto = new GetFolderDto
         {
@@ -81,7 +81,7 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
     }
     */
 
-    public async Task<Folder> AddFolderAsync(CreateFolderDto folderDto)
+    public async Task<Folder> AddFolderAsync(CreateFolderDto folderDto, CancellationToken cancellationToken)
     {
         var newFolder = new Folder
         {
@@ -91,8 +91,8 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
             CreationDate = DateTime.UtcNow
         };
 
-        await unitOfWork.FoldersRepo.Add(newFolder);
-        await unitOfWork.Save();
+        await unitOfWork.FoldersRepo.Add(newFolder, cancellationToken); 
+        await unitOfWork.SaveChangesAsync();
 
         var basePath = settings.Value.BasePath;
         var safeFolderName = PathHelper.MakeSafeName(newFolder.Name);
@@ -102,9 +102,9 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
         return newFolder;
     }
 
-    public async Task<bool> UpdateFolderAsync(UpdateFolderDto folderDto, Guid id)
+    public async Task<bool> UpdateFolderAsync(UpdateFolderDto folderDto, Guid id, CancellationToken cancellationToken)
     {
-        var originalFolder = await unitOfWork.FoldersRepo.GetById(id);
+        var originalFolder = await unitOfWork.FoldersRepo.GetById(id, cancellationToken);
         var updatedFolder = new Folder
         {
             Name = folderDto.Name == null ? originalFolder.Name : folderDto.Name,
@@ -120,14 +120,14 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
         var fullDestPath = Path.Combine(basePath, updatedFolder.RelativePath ?? "", updatedFolder.Name);
         Directory.Move(fullSourcePath, fullDestPath);
 
-        var updated = await unitOfWork.FoldersRepo.Update(id, updatedFolder);
-        await unitOfWork.Save();
+        var updated = await unitOfWork.FoldersRepo.Update(id, updatedFolder, cancellationToken);
+        await unitOfWork.SaveChangesAsync();
         return updated;
     }
 
-    public async Task<bool> DeleteFolderAsync(Guid id)
+    public async Task<bool> DeleteFolderAsync(Guid id, CancellationToken cancellationToken)
     {
-        var folder = await GetFolderByIdAsync(id);
+        var folder = await GetFolderByIdAsync(id, cancellationToken);
         bool deleted = false;
         if (folder != null)
         {
@@ -136,8 +136,8 @@ public class FolderService(IUnitOfWork unitOfWork, IOptions<StorageSettings> set
             Directory.Delete(fullPath, true);
             //PathHelper.DeleteFolderRecursively(fullPath);
             
-            deleted = await unitOfWork.FoldersRepo.Delete(id);
-            await unitOfWork.Save();
+            deleted = await unitOfWork.FoldersRepo.Delete(id, cancellationToken);
+            await unitOfWork.SaveChangesAsync();
         }
 
         return deleted;

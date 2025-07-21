@@ -4,8 +4,8 @@ using Application.Services;
 using Application.Services.Interfaces;
 using Domain.Entities;
 using Domain.Storage;
-using FinderClone;
-using FinderClone.Endpoints;
+using Web;
+using Web.Endpoints;
 using Infrastructure;
 using Microsoft.AspNetCore.Identity;
 
