@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using AutoMapper;
 using Domain.Entities;
 using Domain.Storage;
 using MediatR;
@@ -6,17 +7,22 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Files.Commands.Create;
 
-public class CreateQueryHandler(IUnitOfWork unitOfWork, IOptions<StorageSettings> settings) : IRequestHandler<CreateQuery, StoredFile>
+public class CreateFileCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IOptions<StorageSettings> settings) 
+    : IRequestHandler<CreateFileCommand, StoredFile>
 {
-    public async Task<StoredFile> Handle(CreateQuery request, CancellationToken cancellationToken)
+    public async Task<StoredFile> Handle(CreateFileCommand request, CancellationToken cancellationToken)
     {
-        var newFile = new StoredFile
-        {
-            Name = request.Name,
-            ParentFolderId = request.ParentFolderId,
-            RelativePath = request.RelativePath,
-            CreationDate = DateTime.UtcNow
-        };
+        // var newFile = new StoredFile
+        // {
+        //     Name = request.Name,
+        //     ParentFolderId = request.ParentFolderId,
+        //     RelativePath = request.RelativePath,
+        //     CreationDate = DateTime.UtcNow
+        // };
+        
+        var newFile = mapper.Map<StoredFile>(request);
+        newFile.CreatedOn = DateTime.UtcNow;
+        
         await unitOfWork.FilesRepo.Add(newFile, cancellationToken);
         
         var basePath = settings.Value.BasePath;

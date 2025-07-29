@@ -5,9 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace Application.Folders.Commands.Delete;
 
-public class DeleteQueryHandler (IUnitOfWork unitOfWork, IOptions<StorageSettings> settings) : IRequestHandler<DeleteQuery, bool>
+public class DeleteFolderCommandHandler (IUnitOfWork unitOfWork, IOptions<StorageSettings> settings) : IRequestHandler<DeleteFolderCommand, bool>
 {
-    public async Task<bool> Handle(DeleteQuery request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(DeleteFolderCommand request, CancellationToken cancellationToken)
     {
         var folder = await unitOfWork.FoldersRepo.GetById(request.Id, cancellationToken);
         bool deleted = false;
@@ -18,7 +18,9 @@ public class DeleteQueryHandler (IUnitOfWork unitOfWork, IOptions<StorageSetting
             Directory.Delete(fullPath, true);
             //PathHelper.DeleteFolderRecursively(fullPath);
             
-            deleted = await unitOfWork.FoldersRepo.Delete(request.Id, cancellationToken);
+            folder.DeletedOn = DateTime.UtcNow;
+            deleted = true;
+            //deleted = await unitOfWork.FoldersRepo.Delete(request.Id, cancellationToken);
             await unitOfWork.SaveChangesAsync();
         }
 

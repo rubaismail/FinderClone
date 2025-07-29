@@ -4,8 +4,13 @@ namespace Web;
 
 public static class DependencyInjection
 {
-    public static void AddWebServices(this IHostApplicationBuilder builder)
+    public static void AddWebServices(this IHostApplicationBuilder builder, IConfiguration configuration)
     {
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration["Redis:ConnectionString"];
+        });
+        
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {

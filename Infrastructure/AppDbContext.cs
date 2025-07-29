@@ -52,7 +52,6 @@ public class AppDbContext : DbContext
                 entry.Entity.UpdatedById = userId;
             }
         }
-
         return await base.SaveChangesAsync(cancellationToken);
     }
 }

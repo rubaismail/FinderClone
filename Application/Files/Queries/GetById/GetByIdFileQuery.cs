@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Application.Files.Queries.GetById;
 
-public class GetByIdQuery : IRequest<GetFileDto>
+public class GetByIdFileQuery : IRequest<GetFileDto>
 {
     public Guid Id { get; set; }
 }

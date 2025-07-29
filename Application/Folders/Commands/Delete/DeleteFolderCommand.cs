@@ -2,7 +2,7 @@ using MediatR;
 
 namespace Application.Folders.Commands.Delete;
 
-public class DeleteQuery : IRequest<bool>
+public class DeleteFolderCommand : IRequest<bool>
 {
     public Guid Id { get; set; }
 }
