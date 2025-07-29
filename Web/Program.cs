@@ -13,23 +13,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddApplicationServices();
 builder.AddInfrastructureServices();
-builder.AddWebServices();
+builder.AddWebServices(builder.Configuration);
 
 builder.Services.AddRazorPages();
-
-// builder.Services.AddScoped<IFolderRepository, FolderRepository>();
-// builder.Services.AddScoped<IStoredFileRepository, StoredFileRepository>();
-//builder.Services.AddScoped<IUserRepository, UserRepository>();
-//builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 builder.Services.AddScoped<IFolderService, FolderService>();
 builder.Services.AddScoped<IStoredFileService, StoredFileService>();
 builder.Services.AddScoped<IUserService, UserService>();
-
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-
 builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("StorageSettings"));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
