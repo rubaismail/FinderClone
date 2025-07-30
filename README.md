@@ -1,0 +1,1 @@
+Backend file management system enabling users to store, retrieve, filter, edit, and delete files and folders both on disk and in a relational database. Implemented RESTful Minimal APIs and file I/O operations, and followed clean architecture principles with service abstractions and role-based access control.
